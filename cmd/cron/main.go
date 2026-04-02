@@ -6,6 +6,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"math"
@@ -344,52 +345,15 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, fmt.Sprintf("task limit reached (%d)", maxTasks), 429)
 			return
 		}
-		var req createReq
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+
+		t, err := createTaskFromPost(r, nil)
+		if err != nil {
 			http.Error(w, err.Error(), 400)
 			return
 		}
-		if strings.TrimSpace(req.Name) == "" || strings.TrimSpace(req.Command) == "" {
-			http.Error(w, "name/command required", 400)
-			return
-		}
-		if req.Type != "interval" && req.Type != "cron" {
-			http.Error(w, "invalid type", 400)
-			return
-		}
-		// Validate notification configs
-		for _, n := range req.Notifications {
-			if n.Type != "webhook" && n.Type != "email" && n.Type != "telegram" {
-				http.Error(w, "invalid notification type: "+n.Type, 400)
-				return
-			}
-		}
-		id := newTaskID()
-		t := &Task{
-			ID: id, Name: req.Name, Command: req.Command, Type: req.Type,
-			Status: "running", CronExpr: "",
-			TimeoutSec: req.TimeoutSec, RetryCount: req.RetryCount,
-			RetryDelaySec: req.RetryDelaySec, Env: req.Env,
-			Notifications: req.Notifications,
-			Category: req.Category, Tags: req.Tags, Priority: req.Priority,
-			DependsOn: req.DependsOn, AllowParallel: req.AllowParallel,
-			MaxLogEntries: req.MaxLogEntries,
-		}
-		if req.Type == "interval" {
-			if req.IntervalMin < 1 {
-				http.Error(w, "interval_min >=1", 400)
-				return
-			}
-			t.Interval = time.Duration(req.IntervalMin) * time.Minute
-		} else {
-			if !isValidCron(req.CronExpr) {
-				http.Error(w, "invalid cron", 400)
-				return
-			}
-			t.CronExpr = req.CronExpr
-		}
+
 		mu.Lock()
-		tasks[id] = t
+		tasks[t.ID] = t
 		mu.Unlock()
 		startSchedule(t)
 		persistTask(t)
@@ -427,6 +391,28 @@ func taskActionHandler(w http.ResponseWriter, r *http.Request) {
 		mu.Unlock()
 		persistDelete(id)
 		w.WriteHeader(204)
+		return
+	}
+	if len(parts) == 1 && r.Method == http.MethodPut {
+		// update task
+		newTask, err := createTaskFromPost(r, &id)
+		if err != nil {
+			http.Error(w, err.Error(), 400)
+			return
+		}
+
+		mu.Lock()
+		tasks[id] = newTask
+		clearSchedule(t)
+		mu.Unlock()
+
+		startSchedule(newTask)
+		// delete old persistent task and save new one
+		persistDelete(id)
+		persistTask(newTask)
+		jsonResponse(w)
+		json.NewEncoder(w).Encode(sanitizeTask(newTask))
+		w.WriteHeader(200)
 		return
 	}
 	if len(parts) < 2 {
@@ -532,6 +518,56 @@ func taskActionHandler(w http.ResponseWriter, r *http.Request) {
 	default:
 		w.WriteHeader(404)
 	}
+}
+
+func createTaskFromPost(r *http.Request, id *string) (*Task, error) {
+	var req createReq
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, err
+	}
+
+	if strings.TrimSpace(req.Name) == "" || strings.TrimSpace(req.Command) == "" {
+		return nil, errors.New("name/command required")
+	}
+	if req.Type != "interval" && req.Type != "cron" {
+		return nil, errors.New("invalid type")
+	}
+	// Validate notification configs
+	for _, n := range req.Notifications {
+		if n.Type != "webhook" && n.Type != "email" && n.Type != "telegram" {
+			return nil, errors.New("invalid notification type")
+		}
+	}
+
+	finalId := newTaskID()
+	if id != nil {
+		finalId = *id
+	}
+
+	newTask := &Task{
+		ID: finalId, Name: req.Name, Command: req.Command, Type: req.Type,
+		Status: "running", CronExpr: "",
+		TimeoutSec: req.TimeoutSec, RetryCount: req.RetryCount,
+		RetryDelaySec: req.RetryDelaySec, Env: req.Env,
+		Notifications: req.Notifications,
+		Category:      req.Category, Tags: req.Tags, Priority: req.Priority,
+		DependsOn: req.DependsOn, AllowParallel: req.AllowParallel,
+		MaxLogEntries: req.MaxLogEntries,
+	}
+
+	if req.Type == "interval" {
+		if req.IntervalMin < 1 {
+			return nil, errors.New("interval_min >=1")
+		}
+		newTask.Interval = time.Duration(req.IntervalMin) * time.Minute
+	} else {
+		if !isValidCron(req.CronExpr) {
+			return nil, errors.New("invalid cron")
+		}
+		newTask.CronExpr = req.CronExpr
+	}
+
+	return newTask, nil
 }
 
 func sanitizeTask(t *Task) *Task {
@@ -1158,7 +1194,7 @@ func importHandler(w http.ResponseWriter, r *http.Request) {
 			TimeoutSec: req.TimeoutSec, RetryCount: req.RetryCount,
 			RetryDelaySec: req.RetryDelaySec, Env: req.Env,
 			Notifications: req.Notifications,
-			Category: req.Category, Tags: req.Tags, Priority: req.Priority,
+			Category:      req.Category, Tags: req.Tags, Priority: req.Priority,
 			DependsOn: req.DependsOn, AllowParallel: req.AllowParallel,
 			MaxLogEntries: req.MaxLogEntries,
 		}
@@ -1236,49 +1272,49 @@ var builtinTemplates = []taskTemplate{
 		ID: "backup-appdata", Name: "AppData Backup",
 		Description: "Archive /DATA/AppData to /DATA/backups/",
 		Command:     "mkdir -p /DATA/backups && tar -czf /DATA/backups/appdata_$(date +%Y%m%d_%H%M%S).tar.gz -C /DATA AppData",
-		Type: "cron", CronExpr: "0 2 * * *",
+		Type:        "cron", CronExpr: "0 2 * * *",
 		Category: "backup", TimeoutSec: 600,
 	},
 	{
 		ID: "cleanup-tmp", Name: "Cleanup Temp Files",
 		Description: "Remove files older than 7 days from /tmp",
 		Command:     "find /tmp -type f -mtime +7 -delete 2>/dev/null; echo cleaned",
-		Type: "cron", CronExpr: "0 4 * * 0",
+		Type:        "cron", CronExpr: "0 4 * * 0",
 		Category: "maintenance", TimeoutSec: 120,
 	},
 	{
 		ID: "health-check", Name: "System Health Check",
 		Description: "Check disk space, memory, and load average",
 		Command:     "echo '=== Disk ===' && df -h / /DATA 2>/dev/null && echo '=== Memory ===' && free -h && echo '=== Load ===' && uptime",
-		Type: "interval", IntervalMin: 30,
+		Type:        "interval", IntervalMin: 30,
 		Category: "monitoring", TimeoutSec: 30,
 	},
 	{
 		ID: "docker-prune", Name: "Docker Cleanup",
 		Description: "Remove unused Docker images, containers, and volumes",
 		Command:     "DOCKER_CONFIG=/DATA/.docker docker system prune -af --volumes 2>&1 || echo 'docker not available'",
-		Type: "cron", CronExpr: "0 3 * * 0",
+		Type:        "cron", CronExpr: "0 3 * * 0",
 		Category: "maintenance", TimeoutSec: 300,
 	},
 	{
 		ID: "update-check", Name: "System Update Check",
 		Description: "Check for available system updates",
 		Command:     "cat /etc/os-release && echo '---' && uname -r",
-		Type: "cron", CronExpr: "0 8 * * 1",
+		Type:        "cron", CronExpr: "0 8 * * 1",
 		Category: "monitoring", TimeoutSec: 60,
 	},
 	{
 		ID: "ssl-cert-check", Name: "SSL Certificate Expiry Check",
 		Description: "Check SSL certificate expiry for a domain",
 		Command:     "echo | openssl s_client -connect example.com:443 -servername example.com 2>/dev/null | openssl x509 -noout -dates 2>/dev/null || echo 'openssl not available'",
-		Type: "cron", CronExpr: "0 9 * * *",
+		Type:        "cron", CronExpr: "0 9 * * *",
 		Category: "monitoring", TimeoutSec: 30,
 	},
 	{
 		ID: "docker-status", Name: "Docker Container Status",
 		Description: "List all Docker containers with status and resource usage",
 		Command:     "docker ps -a --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}' 2>&1 && echo '---' && docker stats --no-stream --format 'table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}' 2>&1 || echo 'docker not available'",
-		Type: "interval", IntervalMin: 15,
+		Type:        "interval", IntervalMin: 15,
 		Category: "monitoring", TimeoutSec: 30,
 	},
 }
@@ -1304,16 +1340,16 @@ func settingsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		// Mask the bot token for GET responses
 		resp := struct {
-			TelegramBotToken  string `json:"telegram_bot_token"`
-			TelegramChatID    string `json:"telegram_chat_id"`
-			TelegramOnSuccess bool   `json:"telegram_on_success"`
-			TelegramOnFailure bool   `json:"telegram_on_failure"`
-			TelegramConfigured bool  `json:"telegram_configured"`
+			TelegramBotToken   string `json:"telegram_bot_token"`
+			TelegramChatID     string `json:"telegram_chat_id"`
+			TelegramOnSuccess  bool   `json:"telegram_on_success"`
+			TelegramOnFailure  bool   `json:"telegram_on_failure"`
+			TelegramConfigured bool   `json:"telegram_configured"`
 		}{
-			TelegramBotToken:  maskToken(s.TelegramBotToken),
-			TelegramChatID:    s.TelegramChatID,
-			TelegramOnSuccess: s.TelegramOnSuccess,
-			TelegramOnFailure: s.TelegramOnFailure,
+			TelegramBotToken:   maskToken(s.TelegramBotToken),
+			TelegramChatID:     s.TelegramChatID,
+			TelegramOnSuccess:  s.TelegramOnSuccess,
+			TelegramOnFailure:  s.TelegramOnFailure,
 			TelegramConfigured: s.TelegramBotToken != "" && s.TelegramChatID != "",
 		}
 		jsonResponse(w)
