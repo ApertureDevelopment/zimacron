@@ -1,7 +1,7 @@
 # Cron 
 [![ZimaOS](https://img.shields.io/badge/ZimaOS-Module-blue?style=flat-square)](https://github.com/IceWhaleTech/ZimaOS)
 [![GitHub](https://img.shields.io/github/stars/chicohaager/cron?style=flat-square)](https://github.com/chicohaager/cron)
-[![License](https://img.shields.io/badge/License-Apache%202.0-green?style=flat-square)](LICENSE)
+[![License](https://img.shields.io/github/license/chicohaager/cron)](LICENSE)
 
 A modern, reliable task scheduler for ZimaOS with a completely redesigned web interface. Replaces the previous cron implementation with improved task persistence, advanced scheduling options, and comprehensive notification support.
 
@@ -177,12 +177,13 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## 📄 License
 
-This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT license - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
 - [IceWhale Technology](https://github.com/IceWhaleTech) – ZimaOS Team
-- [@Lintuxer](https://github.com/chicohaager) – Original author
+- [@LinkLeong](https://github.com/LinkLeong/zima_cron) – Original author
+- [@Lintuxer](https://github.com/chicohaager) – Various code changes
 - Community contributors and testers
 
 ---
