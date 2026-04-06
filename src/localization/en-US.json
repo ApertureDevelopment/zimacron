@@ -1,0 +1,226 @@
+{
+  "languageName": "English ( United States )",
+  "nav": {
+    "title": "Scheduler",
+    "language": "Language",
+    "languageTooltip": "Change language",
+    "settingsTooltip": "Settings",
+    "uiModeSwitcherTooltip": "UI Mode toggle (Light/Dark)"
+  },
+  "taskView": {
+    "title": "Tasks",
+    "addTaskButton": {
+      "title": "Add Task",
+      "tooltip": "Add new task"
+    },
+    "runAllTasksButton": {
+      "title": "Run all once",
+      "tooltip": "Run all tasks once"
+    },
+    "categorySelector": {
+      "tooltip": "Filter by category",
+      "defaultOption": "All Categories"
+    },
+    "tagsSelector": {
+      "tooltip": "Filter by tags",
+      "defaultOption": "All Tags"
+    },
+    "taskList": {
+      "listNameTitle": "Name",
+      "listCommandTitle": "Command",
+      "listStatusTitle": "Status",
+      "listNextRunTitle": "Next Run",
+      "listLastResultTitle": "Last Result",
+      "listActionsTitle": "Actions",
+      "warn": {
+        "waitingMessage": "Waiting for backend to start...",
+        "waitingRetryMessage": "Auto-Retrying every 5 seconds"
+      },
+      "taskEntry": {
+        "statusField": {
+          "running": "Running",
+          "paused": "Paused",
+          "executing": "Executing..."
+        },
+        "lastResultField": {
+          "success": "Success",
+          "failure": "Fail"
+        }
+      },
+      "actionsField": {
+        "runOnceButton": {
+          "title": "Run Once",
+          "tooltip": "Run task once"
+        },
+        "pauseButton": {
+          "title": "Pause",
+          "tooltip": "Pause task"
+        },
+        "showLogButton": {
+          "title": "Show Log",
+          "tooltip": "Show task log"
+        },
+        "deleteButton": {
+          "title": "Delete",
+          "tooltip": "Delete task"
+        },
+        "editButton": {
+          "title": "Edit",
+          "tooltip": "Edit task"
+        }
+      },
+      "logsExpander": {
+        "title": "Logs - {taskName}",
+        "searchInput": {
+          "placeholder": "Search logs...",
+          "tooltip": "Search logs for specific entry"
+        },
+        "exportCSVButton": {
+          "title": "Export CSV",
+          "tooltip": "Export logs to CSV"
+        },
+        "exportJSONButton": {
+          "title": "Export JSON",
+          "tooltip": "Export logs to JSON"
+        },
+        "clearLogsButton": {
+          "title": "Clear Logs",
+          "tooltip": "Clear all logs"
+        }
+      }
+    }
+  },
+  "settingsModal": {
+    "title": "Settings",
+    "description": "Configure global notification settings. Telegram notifications apply to all tasks.",
+    "botToken": {
+      "label": "Telegram Bot Token",
+      "placeholder": "Enter your bot token",
+      "tooltip": "Get your bot token from @BotFather"
+    },
+    "chatId": {
+      "label": "Telegram Chat ID",
+      "placeholder": "Enter your chat ID",
+      "tooltip": "Get your chat ID from @get_id_bot"
+    },
+    "onSuccessCheckbox": {
+      "label": "On success",
+      "tooltip": "Send a notification on task success"
+    },
+    "onFailureCheckbox": {
+      "label": "On failure",
+      "tooltip": "Send a notification on task failure"
+    },
+    "saveButton": "Save",
+    "cancelButton": "Cancel",
+    "testButton": "Test",
+    "successMessage": "Settings saved successfully",
+    "errorMessage": "Failed to save settings"
+  },
+  "taskModal": {
+    "createTitle": "Create Task",
+    "editTitle": "Edit Task",
+    "saveButton": "Save",
+    "cancelButton": "Cancel",
+    "templateSelector": {
+      "label": "Start from template",
+      "placeholder": "-- Blank Task --"
+    },
+    "taskNameInput": {
+      "label": "Task Name",
+      "placeholder": "e.g. Daily Backup"
+    },
+    "commandInput": {
+      "label": "Command",
+      "placeholder": "e.g. /bin/bash /path/to/script.sh"
+    },
+    "scheduleTypeSelector": {
+      "label": "Schedule Type",
+      "interval": "Interval (minutes)",
+      "cron": "Cron Expression"
+    },
+    "intervalMinutesInput": {
+      "label": "Interval (minutes)",
+      "placeholder": "e.g. 15"
+    },
+    "categoryInput": {
+      "label": "Category",
+      "placeholder": "e.g. Backup"
+    },
+    "tagsInput": {
+      "label": "Tags ( comma separated )",
+      "placeholder": "e.g. Daily,Important"
+    },
+    "priorityInput": {
+      "label": "Priority (1 - 10)",
+      "placeholder": "5"
+    },
+    "advancedOptions": {
+      "label": "Advanced Options",
+      "timeoutInput": {
+        "label": "Timeout (seconds)",
+        "placeholder": "120"
+      },
+      "retryInput": {
+        "label": "Retry Count",
+        "placeholder": "0"
+      },
+      "retryDelayInput": {
+        "label": "Retry Delay (seconds)",
+        "placeholder": "10"
+      },
+      "environmentVariablesInput": {
+        "label": "Environment Variables",
+        "keyInputPlaceholder": "KEY",
+        "valueInputPlaceholder": "VALUE",
+        "addButton": "Add Variable",
+        "deleteButtonTooltip": "Delete Variable"
+      },
+      "maxLogEntriesInput": {
+        "label": "Max Log Entries",
+        "placeholder": "100"
+      },
+      "dependsOnInput": {
+        "label": "Depends On",
+        "placeholder": "e.g. Task1,Task2"
+      },
+      "allowParallelExecutionCheckbox": {
+        "label": "Allow Parallel Execution"
+      },
+      "webkookUrlInput": {
+        "label": "Webkook URL",
+        "placeholder": "https://example.com/webhook"
+      },
+      "notifyOnSuccessCheckbox": "On success",
+      "notifyOnFailureCheckbox": "On failure",
+      "emailNotifications": {
+        "label": "Email Notifications (SMTP)",
+        "recipientInput": {
+          "label": "Recipient",
+          "placeholder": "recipient\\@example.com",
+          "tooltip": "Enter an email address to notify on success or failure."
+        },
+        "smtpServerInput": {
+          "label": "SMTP Server",
+          "placeholder": "smtp.example.com",
+          "tooltip": "Enter the SMTP server address."
+        },
+        "smtpPortInput": {
+          "label": "SMTP Port",
+          "placeholder": "587",
+          "tooltip": "Enter the SMTP server port."
+        },
+        "smtpUsernameInput": {
+          "label": "SMTP Username",
+          "placeholder": "username",
+          "tooltip": "Enter the SMTP username."
+        },
+        "smtpPasswordInput": {
+          "label": "SMTP Password",
+          "placeholder": "password",
+          "tooltip": "Enter the SMTP password."
+        }
+      }
+    }
+  }
+}
