@@ -1,8 +1,10 @@
 import {createI18n} from "vue-i18n";
 import {ref} from "vue";
+import { localeNames } from 'virtual:locale-names';
 
-export const SUPPORTED_LOCALES : string[] = ["en-US"];
+export const SUPPORTED_LOCALES : string[] = Object.keys(localeNames);
 export type Locale = typeof SUPPORTED_LOCALES[number];
+export const localeDisplayNames = localeNames;
 
 const defaultLocale : Locale = "en-US";
 let userLocale = localStorage.getItem("userLocale") ?? defaultLocale;
@@ -21,13 +23,21 @@ export const i18n = createI18n({
 
 const downloadedLocales = new Set<string>();
 
+const localeLoaders = import.meta.glob("./localization/*.json");
+
 export async function loadLocale(locale : Locale) {
     if(downloadedLocales.has(locale)) {
         setLocale(locale);
         return;
     }
 
-    const messages = await import(`./localization/${locale}.json`);
+    const loader = localeLoaders[`./localization/${locale}.json`];
+    if(!loader) {
+        throw new Error(`Locale ${locale} not found`);
+    }
+
+    const messages = await loader() as { default: Record<string, string> };
+
 
     i18n.global.setLocaleMessage(locale, messages.default)
     downloadedLocales.add(locale);

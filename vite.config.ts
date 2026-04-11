@@ -2,7 +2,7 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
 import VueI18nPlugin from '@intlify/unplugin-vue-i18n/vite'
-import * as path from "node:path";
+import viteLocaleNamesPlugin from "./vite-locale-names.plugin.ts";
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -10,8 +10,8 @@ export default defineConfig({
     plugins: [
         vue(),
         tailwindcss(),
+        viteLocaleNamesPlugin(),
         VueI18nPlugin({
-            include: [path.resolve(__dirname, 'src/localization/**')],
             compositionOnly: true,
         })
     ],
